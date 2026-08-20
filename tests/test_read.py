@@ -103,12 +103,19 @@ def test_read_pdf_extracts_pages_with_pdfium(monkeypatch):
         def get_textpage(self):
             return TextPage(self.text)
 
+        def close(self):
+            closed.append(f"page: {self.text}")
+
     class Document:
         def __init__(self, path):
             assert path == "document.pdf"
+            self.pages = [Page("First page"), Page("Second page")]
 
-        def __iter__(self):
-            return iter([Page("First page"), Page("Second page")])
+        def __len__(self):
+            return len(self.pages)
+
+        def __getitem__(self, index):
+            return self.pages[index]
 
         def close(self):
             closed.append("document")
@@ -116,7 +123,13 @@ def test_read_pdf_extracts_pages_with_pdfium(monkeypatch):
     monkeypatch.setattr(rd.pdfium, "PdfDocument", Document)
 
     assert rd.read_pdf("document.pdf", ocr=False) == "First page\n\nSecond page"
-    assert closed == ["First page", "Second page", "document"]
+    assert closed == [
+        "First page",
+        "page: First page",
+        "Second page",
+        "page: Second page",
+        "document",
+    ]
 
 
 def test_pdf_text_quality_detects_pages_needing_ocr():

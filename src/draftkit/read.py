@@ -258,15 +258,19 @@ def read_pdf(file_path: str, ocr: Union[str, bool] = 'auto') -> str:
     pdf = pdfium.PdfDocument(file_path)
     try:
         pages = []
-        for page in pdf:
-            text_page = page.get_textpage()
+        for page_number in range(len(pdf)):
+            page = pdf[page_number]
             try:
-                native_text = text_page.get_text_bounded()
+                text_page = page.get_textpage()
+                try:
+                    native_text = text_page.get_text_bounded()
+                finally:
+                    text_page.close()
+                use_ocr = ocr in ('lighton', 'rapidocr') or (ocr == 'auto' and _pdf_text_needs_ocr(native_text))
+                text = (_ocr_page(page, backends, readers, disabled) or native_text) if use_ocr else native_text
+                pages.append(text)
             finally:
-                text_page.close()
-            use_ocr = ocr in ('lighton', 'rapidocr') or (ocr == 'auto' and _pdf_text_needs_ocr(native_text))
-            text = (_ocr_page(page, backends, readers, disabled) or native_text) if use_ocr else native_text
-            pages.append(text)
+                page.close()
         return '\n\n'.join(pages)
     finally:
         pdf.close()
