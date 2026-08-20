@@ -1,4 +1,3 @@
-import sys
 import types
 
 import pytest
@@ -69,10 +68,16 @@ def test_read_link_can_ignore_links(monkeypatch):
 
 
 def test_heavy_reader_defaults_to_body(monkeypatch):
-    url2md = lambda url, sel: (url, sel)
-    monkeypatch.setitem(sys.modules, "playwrightnb", types.SimpleNamespace(url2md=url2md))
+    html = '<html><body><main>Rendered content</main></body></html>'
+    monkeypatch.setattr(rd, "_render_html", lambda url: html)
 
-    assert rd.read_link("https://example.org", heavy=True) == (
-        "https://example.org",
-        "body",
-    )
+    assert rd.read_link("https://example.org", heavy=True).strip() == "Rendered content"
+
+
+def test_heavy_reader_uses_selector(monkeypatch):
+    html = '<body><main>Selected</main><aside>Skipped</aside></body>'
+    monkeypatch.setattr(rd, "_render_html", lambda url: html)
+
+    markdown = rd.read_link("https://example.org", heavy=True, sel="main")
+
+    assert markdown.strip() == "Selected"

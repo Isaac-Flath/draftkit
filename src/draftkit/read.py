@@ -41,6 +41,20 @@ def _read_html(url: str, sel: Optional[str] = None, ignore_links: bool = False) 
         content = str(BeautifulSoup(content, 'html.parser').select_one(sel))
     return _html_to_markdown(content, ignore_links=ignore_links)
 
+
+def _render_html(url: str) -> str:
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        try:
+            page = browser.new_page()
+            page.goto(url)
+            page.wait_for_load_state('networkidle')
+            return page.content()
+        finally:
+            browser.close()
+
 def read_text(url, # URL to read
              ): # Text from page
     "Get text from `url`"
@@ -56,9 +70,10 @@ def read_link(url: str,   # URL to read
     if not heavy and not useJina: return _read_html(url, sel=sel, ignore_links=ignore_links)
     elif not heavy and useJina:   return httpx.get(f"https://r.jina.ai/{url}").text
     elif heavy and not useJina:
-        import playwrightnb
-        return playwrightnb.url2md(url,sel='body' if sel is None else sel)
-    elif heavy and useJina: raise NotImplementedError("Unsupported. No benefit to using Jina with playwrightnb")
+        content = _render_html(url)
+        content = str(BeautifulSoup(content, 'html.parser').select_one(sel or 'body'))
+        return _html_to_markdown(content, ignore_links=ignore_links)
+    elif heavy and useJina: raise NotImplementedError("Unsupported. No benefit to using Jina with a browser")
 
 def read_url(*args,**kwargs):
     warnings.warn("read_url() is deprecated, use read_link() instead. It is behaviorally identical.", 

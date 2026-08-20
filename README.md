@@ -16,6 +16,8 @@ pip install "draftkit[browser]"
 playwright install
 ```
 
+The browser extra uses Playwright's official Python package.
+
 ## Usage
 
 ```python

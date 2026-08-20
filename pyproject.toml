@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-browser = ["playwrightnb"]
+browser = ["playwright"]
 test = ["pytest"]
 
 [project.urls]
