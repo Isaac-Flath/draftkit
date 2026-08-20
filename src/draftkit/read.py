@@ -20,9 +20,9 @@ from typing import Dict, List, Optional, Union
 
 import html2text
 import httpx
+import pypdfium2 as pdfium
 import requests
 from bs4 import BeautifulSoup
-from pypdf import PdfReader
 
 
 def _html_to_markdown(content: str, ignore_links: bool = False) -> str:
@@ -141,10 +141,19 @@ def read_dir(path: str,                          # path to read
 
 def read_pdf(file_path: str # path of PDF file to read
             ) -> str:
-    "Reads the text of a PDF with PdfReader"
-    with open(file_path, 'rb') as file:
-        reader = PdfReader(file)
-        return ' '.join(page.extract_text() for page in reader.pages)
+    "Reads the text of a PDF with PDFium"
+    pdf = pdfium.PdfDocument(file_path)
+    try:
+        pages = []
+        for page in pdf:
+            text_page = page.get_textpage()
+            try:
+                pages.append(text_page.get_text_bounded())
+            finally:
+                text_page.close()
+        return '\n\n'.join(pages)
+    finally:
+        pdf.close()
 
 def read_google_sheet(url: str # URL of a Google Sheet to read
                      ):

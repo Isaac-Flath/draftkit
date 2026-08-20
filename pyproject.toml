@@ -22,7 +22,7 @@ dependencies = [
     "beautifulsoup4",
     "html2text",
     "httpx",
-    "pypdf",
+    "pypdfium2",
     "requests",
 ]
 
