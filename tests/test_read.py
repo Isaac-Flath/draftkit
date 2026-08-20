@@ -81,3 +81,39 @@ def test_heavy_reader_uses_selector(monkeypatch):
     markdown = rd.read_link("https://example.org", heavy=True, sel="main")
 
     assert markdown.strip() == "Selected"
+
+
+def test_read_pdf_extracts_pages_with_pdfium(monkeypatch):
+    closed = []
+
+    class TextPage:
+        def __init__(self, text):
+            self.text = text
+
+        def get_text_bounded(self):
+            return self.text
+
+        def close(self):
+            closed.append(self.text)
+
+    class Page:
+        def __init__(self, text):
+            self.text = text
+
+        def get_textpage(self):
+            return TextPage(self.text)
+
+    class Document:
+        def __init__(self, path):
+            assert path == "document.pdf"
+
+        def __iter__(self):
+            return iter([Page("First page"), Page("Second page")])
+
+        def close(self):
+            closed.append("document")
+
+    monkeypatch.setattr(rd.pdfium, "PdfDocument", Document)
+
+    assert rd.read_pdf("document.pdf") == "First page\n\nSecond page"
+    assert closed == ["First page", "Second page", "document"]
