@@ -1,9 +1,0 @@
-project:
-  output-dir: _docs
-
-website:
-  title: "contextkit"
-  site-url: "https://AnswerDotAI.github.io/contextkit"
-  description: "Reusable contexts for LLMs"
-  repo-branch: main
-  repo-url: "https://github.com/AnswerDotAI/contextkit"
