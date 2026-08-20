@@ -139,18 +139,134 @@ def read_dir(path: str,                          # path to read
     else:
         return result
 
-def read_pdf(file_path: str # path of PDF file to read
-            ) -> str:
-    "Reads the text of a PDF with PDFium"
+
+def _pdf_text_needs_ocr(text: str) -> bool:
+    compact = re.sub(r'\s', '', text)
+    if len(compact) < 20:
+        return True
+    if compact.count('\ufffd') / len(compact) > 0.02:
+        return True
+    return len(compact) > 80 and len(text.split()) < 2
+
+
+def _lighton_reader():
+    import torch
+    from transformers import LightOnOcrForConditionalGeneration, LightOnOcrProcessor
+
+    if torch.cuda.is_available():
+        device = 'cuda'
+        dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+        dtype = torch.float32
+    else:
+        device = 'cpu'
+        dtype = torch.float32
+
+    model_name = 'lightonai/LightOnOCR-2-1B'
+    model = LightOnOcrForConditionalGeneration.from_pretrained(model_name, torch_dtype=dtype).to(device)
+    model.eval()
+    processor = LightOnOcrProcessor.from_pretrained(model_name)
+
+    def read(image):
+        conversation = [{'role': 'user', 'content': [{'type': 'image', 'image': image}]}]
+        inputs = processor.apply_chat_template(
+            conversation,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors='pt',
+        )
+        inputs = {
+            key: value.to(device=device, dtype=dtype) if value.is_floating_point() else value.to(device)
+            for key, value in inputs.items()
+        }
+        with torch.inference_mode():
+            output_ids = model.generate(**inputs, max_new_tokens=4096)
+        generated_ids = output_ids[0, inputs['input_ids'].shape[1]:]
+        return processor.decode(generated_ids, skip_special_tokens=True).strip()
+
+    return read
+
+
+def _rapidocr_reader():
+    from rapidocr import RapidOCR
+
+    engine = RapidOCR()
+
+    def read(image):
+        result = engine(image)
+        return '\n'.join(result.txts or ()).strip()
+
+    return read
+
+
+_OCR_READERS = {'lighton': _lighton_reader, 'rapidocr': _rapidocr_reader}
+
+
+def _ocr_page(page, backends, readers, disabled):
+    bitmap = page.render(scale=200 / 72)
+    try:
+        image = bitmap.to_pil().copy()
+    finally:
+        bitmap.close()
+    for backend in backends:
+        if backend in disabled:
+            continue
+        if backend not in readers:
+            try:
+                readers[backend] = _OCR_READERS[backend]()
+            except (ImportError, ModuleNotFoundError):
+                disabled.add(backend)
+                continue
+            except Exception as error:
+                disabled.add(backend)
+                warnings.warn(
+                    f'{backend} OCR could not start; trying the next backend: {error}',
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                continue
+        try:
+            return readers[backend](image)
+        except Exception as error:
+            disabled.add(backend)
+            warnings.warn(f'{backend} OCR failed; trying the next backend: {error}', RuntimeWarning, stacklevel=2)
+    warnings.warn(
+        'OCR was needed but no OCR backend was available. Install draftkit[ocr].',
+        RuntimeWarning,
+        stacklevel=2,
+    )
+    return ''
+
+
+def read_pdf(file_path: str, ocr: Union[str, bool] = 'auto') -> str:
+    """Read a PDF using PDFium, with optional local OCR.
+
+    ``ocr='auto'`` keeps good native text and tries LightOnOCR then RapidOCR
+    for deficient pages. Use ``'lighton'`` or ``'rapidocr'`` to OCR every
+    page, or ``False`` to disable OCR.
+    """
+    if ocr is True:
+        ocr = 'auto'
+    if ocr not in ('auto', 'lighton', 'rapidocr', False):
+        raise ValueError("ocr must be 'auto', 'lighton', 'rapidocr', or False")
+
+    backends = ('lighton', 'rapidocr') if ocr in ('auto', 'lighton') else ('rapidocr',)
+    readers = {}
+    disabled = set()
     pdf = pdfium.PdfDocument(file_path)
     try:
         pages = []
         for page in pdf:
             text_page = page.get_textpage()
             try:
-                pages.append(text_page.get_text_bounded())
+                native_text = text_page.get_text_bounded()
             finally:
                 text_page.close()
+            use_ocr = ocr in ('lighton', 'rapidocr') or (ocr == 'auto' and _pdf_text_needs_ocr(native_text))
+            text = (_ocr_page(page, backends, readers, disabled) or native_text) if use_ocr else native_text
+            pages.append(text)
         return '\n\n'.join(pages)
     finally:
         pdf.close()

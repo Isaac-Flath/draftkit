@@ -115,5 +115,49 @@ def test_read_pdf_extracts_pages_with_pdfium(monkeypatch):
 
     monkeypatch.setattr(rd.pdfium, "PdfDocument", Document)
 
-    assert rd.read_pdf("document.pdf") == "First page\n\nSecond page"
+    assert rd.read_pdf("document.pdf", ocr=False) == "First page\n\nSecond page"
     assert closed == ["First page", "Second page", "document"]
+
+
+def test_pdf_text_quality_detects_pages_needing_ocr():
+    assert rd._pdf_text_needs_ocr("")
+    assert rd._pdf_text_needs_ocr("word" * 30)
+    assert not rd._pdf_text_needs_ocr("This is a normal sentence with enough native PDF text.")
+
+
+def test_ocr_page_falls_back_from_lighton_to_rapidocr(monkeypatch):
+    class Bitmap:
+        def to_pil(self):
+            return types.SimpleNamespace(copy=lambda: "page image")
+
+        def close(self):
+            pass
+
+    page = types.SimpleNamespace(render=lambda scale: Bitmap())
+    calls = []
+
+    def lighton():
+        calls.append("load lighton")
+
+        def fail(image):
+            calls.append(("lighton", image))
+            raise RuntimeError("model unavailable")
+
+        return fail
+
+    def rapidocr():
+        calls.append("load rapidocr")
+        return lambda image: calls.append(("rapidocr", image)) or "OCR text"
+
+    monkeypatch.setattr(rd, "_OCR_READERS", {"lighton": lighton, "rapidocr": rapidocr})
+
+    with pytest.warns(RuntimeWarning, match="lighton OCR failed"):
+        text = rd._ocr_page(page, ("lighton", "rapidocr"), {}, set())
+
+    assert text == "OCR text"
+    assert calls == [
+        "load lighton",
+        ("lighton", "page image"),
+        "load rapidocr",
+        ("rapidocr", "page image"),
+    ]
