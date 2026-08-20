@@ -32,7 +32,7 @@
 
 ### Breaking changes
 
-- Rename read_url to read_link ([#12](https://github.com/AnswerDotAI/ContextKit/pull/12)), thanks to [@algal](https://github.com/algal)
+- Rename `read_url` to `read_link`.
 
 
 ## 0.0.9
@@ -41,9 +41,9 @@
 
 - Adds docments-style comments to existing functions, so they can be used with SolveIt tool-calling if desired.
 
-- add read_text ([#9](https://github.com/AnswerDotAI/ContextKit/issues/9))
+- Add `read_text`.
 
-- pypdf2 has moved to pypdf ([#7](https://github.com/AnswerDotAI/ContextKit/pull/7)), thanks to [@RensDimmendaal](https://github.com/RensDimmendaal)
+- Move from `PyPDF2` to `pypdf`.
   - This PR renames dependency `PyPDF2` to `pypdf` as the maintainers moved that package.
 This move will silence the deprecation warning that's currently shown when using contextkit.
 
@@ -53,7 +53,7 @@ See: https://pypi.org/project/PyPDF2/
 
 ### Bugs Squashed
 
-- Fixes read_arxiv to use HTTPS, and adds docments docs to various functions for tool support ([#10](https://github.com/AnswerDotAI/ContextKit/pull/10)), thanks to [@algal](https://github.com/algal)
+- Fix `read_arxiv` to use HTTPS and add docments docs for tool support.
   - - Arxiv.org started returning a 301 when you visit their HTTP URL. Commit fdfc490 fixes this library to use HTTPS, restoring lost functionality
 
 
@@ -61,7 +61,7 @@ See: https://pypi.org/project/PyPDF2/
 
 ### New Features
 
-- pypdf2 has moved to pypdf ([#7](https://github.com/AnswerDotAI/ContextKit/pull/7)), thanks to [@RensDimmendaal](https://github.com/RensDimmendaal)
+- Move from `PyPDF2` to `pypdf`.
   - This PR renames dependency `PyPDF2` to `pypdf` as the maintainers moved that package.
 This move will silence the deprecation warning that's currently shown when using contextkit.
 
@@ -94,4 +94,4 @@ See: https://pypi.org/project/PyPDF2/
 
 ### New Features
 
-- Release Context Kit ([#5](https://github.com/AnswerDotAI/ContextKit/issues/5))
+- Release Context Kit.
