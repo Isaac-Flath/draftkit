@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.2.0
+
+### New features
+
+- Read native PDF text with PDFium.
+- Automatically OCR scanned or defective pages with optional LightOnOCR and
+  RapidOCR backends.
+- Allow forcing LightOnOCR Markdown or RapidOCR text extraction for every
+  page.
+
 ## 0.1.1
 
 ### Dependencies
