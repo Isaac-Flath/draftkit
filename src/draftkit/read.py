@@ -21,8 +21,25 @@ from typing import Dict, List, Optional, Union
 import html2text
 import httpx
 import requests
+from bs4 import BeautifulSoup
 from pypdf import PdfReader
-from toolslm.download import read_html
+
+
+def _html_to_markdown(content: str, ignore_links: bool = False) -> str:
+    converter = html2text.HTML2Text(bodywidth=5000)
+    converter.ignore_links = ignore_links
+    converter.ignore_images = True
+    converter.mark_code = True
+    markdown = converter.handle(content)
+    markdown = re.sub(r'\n?<!--.*?-->\n?', '', markdown, flags=re.DOTALL)
+    return re.sub(r'\n?<details>.*?</details>\n?', '', markdown, flags=re.DOTALL)
+
+
+def _read_html(url: str, sel: Optional[str] = None, ignore_links: bool = False) -> str:
+    content = httpx.get(url).text
+    if sel:
+        content = str(BeautifulSoup(content, 'html.parser').select_one(sel))
+    return _html_to_markdown(content, ignore_links=ignore_links)
 
 def read_text(url, # URL to read
              ): # Text from page
@@ -36,7 +53,7 @@ def read_link(url: str,   # URL to read
              ignore_links: bool = False, # Whether to keep links or not
              ): 
     "Reads a url and converts to markdown"
-    if not heavy and not useJina: return read_html(url,sel=sel, ignore_links=ignore_links)
+    if not heavy and not useJina: return _read_html(url, sel=sel, ignore_links=ignore_links)
     elif not heavy and useJina:   return httpx.get(f"https://r.jina.ai/{url}").text
     elif heavy and not useJina:
         import playwrightnb

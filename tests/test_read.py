@@ -42,6 +42,32 @@ def test_read_url_delegates_with_deprecation_warning(monkeypatch):
         )
 
 
+def test_read_link_converts_selected_html(monkeypatch):
+    response = types.SimpleNamespace(
+        text='''
+            <main><a href="https://example.org">Example</a><img src="image.png"></main>
+            <aside>Not selected</aside>
+        '''
+    )
+    monkeypatch.setattr(rd.httpx, "get", lambda url: response)
+
+    markdown = rd.read_link("https://example.org", sel="main")
+
+    assert "[Example](https://example.org)" in markdown
+    assert "Not selected" not in markdown
+    assert "image.png" not in markdown
+
+
+def test_read_link_can_ignore_links(monkeypatch):
+    response = types.SimpleNamespace(text='<a href="https://example.org">Example</a>')
+    monkeypatch.setattr(rd.httpx, "get", lambda url: response)
+
+    markdown = rd.read_link("https://example.org", ignore_links=True)
+
+    assert "Example" in markdown
+    assert "https://example.org" not in markdown
+
+
 def test_heavy_reader_defaults_to_body(monkeypatch):
     url2md = lambda url, sel: (url, sel)
     monkeypatch.setitem(sys.modules, "playwrightnb", types.SimpleNamespace(url2md=url2md))

@@ -19,11 +19,11 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
+    "beautifulsoup4",
     "html2text",
     "httpx",
     "pypdf",
     "requests",
-    "toolslm",
 ]
 
 [project.optional-dependencies]
