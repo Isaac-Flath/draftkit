@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.1.1
+
+### Dependencies
+
+- Replace `toolslm` with local HTML selection and Markdown conversion.
+- Replace `playwrightnb` with the official, optional `playwright` package.
+- Remove the remaining dependency paths to `python-fasthtml`, `fastcore`, and
+  `llms-txt`.
+
 ## 0.1.0
 
 ### Breaking changes
@@ -76,4 +85,3 @@ See: https://pypi.org/project/PyPDF2/
 ### New Features
 
 - Release Context Kit ([#5](https://github.com/AnswerDotAI/ContextKit/issues/5))
-
