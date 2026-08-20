@@ -1,32 +1,45 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "contextkit"
+name = "draftkit"
 dynamic = ["version"]
 description = "Reusable contexts for LLMs"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 authors = [{name = "Isaac Flath", email = "isaac.flath@gmail.com"}]
-keywords = ['nbdev', 'jupyter', 'notebook', 'python']
-classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 3 - Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = ['python-fasthtml', 'httpx', 'toolslm', 'fastcore', 'llms-txt', 'pypdf', 'youtube_transcript_api', 'pytube', 'playwrightnb']
+keywords = ["llm", "context", "markdown", "python"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "html2text",
+    "httpx",
+    "pypdf",
+    "requests",
+    "toolslm",
+]
+
+[project.optional-dependencies]
+browser = ["playwrightnb"]
+test = ["pytest"]
 
 [project.urls]
-Repository = "https://github.com/AnswerDotAI/contextkit"
-Documentation = "https://AnswerDotAI.github.io/contextkit"
-
-[project.entry-points.nbdev]
-contextkit = "contextkit._modidx:d"
+Issues = "https://github.com/isaac-flath/draftkit/issues"
+Repository = "https://github.com/isaac-flath/draftkit"
 
 [tool.setuptools.dynamic]
-version = {attr = "contextkit.__version__"}
+version = {attr = "draftkit.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["contextkit"]
+where = ["src"]
 
-[tool.nbdev]
-allowed_metadata_keys = ['solveit_dialog_mode', 'solveit_ver']
-custom_sidebar = false
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]

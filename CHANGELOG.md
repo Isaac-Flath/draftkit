@@ -1,6 +1,13 @@
 # Release notes
 
-<!-- do not remove -->
+## 0.1.0
+
+### Breaking changes
+
+- Rename the distribution and import package from `contextkit` to `draftkit`.
+- Make Python modules under `src/draftkit` the source of truth; notebooks are
+  now examples only.
+- Move browser automation support to the optional `browser` extra.
 
 ## 0.0.10
 
@@ -69,5 +76,4 @@ See: https://pypi.org/project/PyPDF2/
 ### New Features
 
 - Release Context Kit ([#5](https://github.com/AnswerDotAI/ContextKit/issues/5))
-
 
