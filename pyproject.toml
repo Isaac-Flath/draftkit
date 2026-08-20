@@ -28,6 +28,15 @@ dependencies = [
 
 [project.optional-dependencies]
 browser = ["playwright"]
+lighton = ["pillow", "torch", "transformers>=5"]
+rapidocr = ["onnxruntime", "rapidocr"]
+ocr = [
+    "onnxruntime",
+    "pillow",
+    "rapidocr",
+    "torch",
+    "transformers>=5",
+]
 test = ["pytest"]
 
 [project.urls]
