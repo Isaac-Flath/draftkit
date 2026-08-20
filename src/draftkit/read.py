@@ -205,11 +205,7 @@ _OCR_READERS = {'lighton': _lighton_reader, 'rapidocr': _rapidocr_reader}
 
 
 def _ocr_page(page, backends, readers, disabled):
-    bitmap = page.render(scale=200 / 72)
-    try:
-        image = bitmap.to_pil().copy()
-    finally:
-        bitmap.close()
+    image = None
     for backend in backends:
         if backend in disabled:
             continue
@@ -227,6 +223,12 @@ def _ocr_page(page, backends, readers, disabled):
                     stacklevel=2,
                 )
                 continue
+        if image is None:
+            bitmap = page.render(scale=200 / 72)
+            try:
+                image = bitmap.to_pil().copy()
+            finally:
+                bitmap.close()
         try:
             return readers[backend](image)
         except Exception as error:

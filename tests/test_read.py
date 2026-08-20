@@ -174,3 +174,14 @@ def test_ocr_page_falls_back_from_lighton_to_rapidocr(monkeypatch):
         "load rapidocr",
         ("rapidocr", "page image"),
     ]
+
+
+def test_ocr_page_does_not_render_without_an_installed_backend(monkeypatch):
+    def unavailable():
+        raise ModuleNotFoundError
+
+    monkeypatch.setattr(rd, "_OCR_READERS", {"lighton": unavailable, "rapidocr": unavailable})
+    page = types.SimpleNamespace(render=lambda scale: pytest.fail("page should not be rendered"))
+
+    with pytest.warns(RuntimeWarning, match="no OCR backend was available"):
+        assert rd._ocr_page(page, ("lighton", "rapidocr"), {}, set()) == ""
